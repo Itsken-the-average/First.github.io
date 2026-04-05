@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MSU-Naawan | Student Enrollment Portal</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    background: #f4f6f9;
+    color: #1a1a2e;
+    min-height: 100vh;
+  }
+
+  /* ── Top Bar ── */
+  .topbar {
+    background: #003366;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .topbar-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+  }
+  .topbar-meta {
+    color: #aac4e8;
+    font-size: 12px;
+  }
+  .topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .topbar-user span { color: #aac4e8; font-size: 12px; }
+  .btn-logout {
+    background: transparent;
+    border: 1px solid #aac4e8;
+    color: #aac4e8;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-logout:hover { background: #aac4e8; color: #003366; }
+
+  /* ── Layout ── */
+  .layout {
+    display: flex;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #dce3ed;
+    overflow: hidden;
+  }
+  .sidebar-head {
+    background: #003366;
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 10px 14px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    color: #2c3e50;
+    font-size: 13px;
+    text-decoration: none;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .sidebar nav a:hover { background: #eef3fb; }
+  .sidebar nav a.active {
+    background: #eef3fb;
+    color: #003366;
+    font-weight: bold;
+    border-left: 3px solid #003366;
+  }
+  .sidebar nav a .icon { font-size: 14px; width: 18px; text-align: center; }
+  .sidebar-notice {
+    padding: 10px 14px;
+    background: #fff8e1;
+    border-top: 1px solid #ffe082;
+    font-size: 11px;
+    color: #5d4037;
+  }
+  .sidebar-notice .notice-label {
+    font-weight: bold;
+    font-size: 11px;
+    color: #e65100;
+    margin-bottom: 4px;
+  }
+  .sidebar-notice .deadline { color: #c62828; font-weight: bold; }
+
+  /* ── Main Content ── */
+  .main { flex: 1; min-width: 0; }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: #fff;
+    border: 1px solid #dce3ed;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .progress-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #003366;
+    margin-bottom: 12px;
+  }
+  .progress-subtitle { font-size: 12px; color: #666; margin-bottom: 14px; }
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+  }
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #dce3ed;
+    z-index: 0;
+  }
+  .step.done:not(:last-child)::after { background: #003366; }
+  .step-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #dce3ed;
+    color: #888;
+    font-size: 13px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    position: relative;
+  }
+  .step.done .step-dot { background: #003366; color: #fff; }
+  .step.active .step-dot { background: #1976d2; color: #fff; box-shadow: 0 0 0 3px #bbdefb; }
+  .step-label {
+    font-size: 10px;
+    color: #888;
+    margin-top: 4px;
+    text-align: center;
+  }
+  .step.active .step-label { color: #1976d2; font-weight: bold; }
+  .step.done .step-label { color: #003366; }
+
+  /* Alert boxes */
+  .alert {
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .alert.show { display: block; }
+  .alert-err { background: #fff3f3; border: 1px solid #f5c6cb; color: #721c24; }
+  .alert-ok  { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+  .alert ul  { margin: 6px 0 0 18px; }
+  .alert li  { margin-bottom: 3px; }
+
+  /* Form card */
+  .form-card {
+    background: #fff;
+    border: 1px solid #dce3ed;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .form-card-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #003366;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #333;
+  }
+  .field label .req { color: #c62828; margin-left: 2px; }
+  .field input, .field textarea, .field select {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+    color: #1a1a2e;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    background: #fff;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25,118,210,0.12);
+    outline: none;
+  }
+  .field input.err { border-color: #c62828; background: #fff8f8; }
+  .field .hint { font-size: 11px; color: #888; }
+  .full { grid-column: 1 / -1; }
+
+  /* Enrolled subjects table */
+  .subjects-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+  .subjects-table th {
+    background: #003366;
+    color: #fff;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .subjects-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+  }
+  .subjects-table tr:nth-child(even) td { background: #f7f9fc; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+  }
+  .badge-ok  { background: #d4edda; color: #155724; }
+  .badge-pend{ background: #fff3cd; color: #856404; }
+
+  /* Action buttons */
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .btn {
+    padding: 9px 20px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s, box-shadow 0.2s;
+  }
+  .btn:hover { opacity: 0.88; }
+  .btn-primary  { background: #003366; color: #fff; }
+  .btn-secondary{ background: #e0e0e0; color: #333; font-weight: normal; }
+  .btn-danger   { background: #c62828; color: #fff; }
+  .btn-draft    { background: #2e7d32; color: #fff; }
+  .btn-back     {
+    background: transparent;
+    border: 1px solid #003366;
+    color: #003366;
+    margin-left: auto;
+  }
+
+  /* Right panel */
+  .right-panel {
+    width: 210px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .panel-card {
+    background: #fff;
+    border: 1px solid #dce3ed;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-card-head {
+    background: #f0f4fa;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #003366;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #dce3ed;
+  }
+  .panel-card-body { padding: 10px 12px; }
+  .announce-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    color: #333;
+    line-height: 1.5;
+  }
+  .announce-item:last-child { border-bottom: none; }
+  .announce-item .atag {
+    font-size: 10px;
+    font-weight: bold;
+    color: #1976d2;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .quick-link {
+    display: block;
+    font-size: 12px;
+    color: #003366;
+    text-decoration: none;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+  }
+  .quick-link:last-child { border-bottom: none; }
+  .quick-link:hover { color: #1976d2; text-decoration: underline; }
+
+  /* Footer */
+  .footer {
+    background: #003366;
+    padding: 10px 24px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .footer span { color: #aac4e8; font-size: 12px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .modal-title { font-size: 16px; font-weight: bold; color: #003366; margin-bottom: 10px; }
+  .modal-body  { font-size: 13px; color: #444; margin-bottom: 18px; line-height: 1.6; }
+  .modal-foot  { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .right-panel { display: none; }
+    .layout { padding: 12px; }
+  }
+  @media (max-width: 680px) {
+    .layout { flex-direction: column; padding: 10px; }
+    .sidebar { width: 100%; }
+    .form-grid { grid-template-columns: 1fr; }
+    .btn-back { margin-left: 0; }
+    .topbar { padding: 10px 14px; }
+    .steps { gap: 2px; }
+    .step-label { font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div>
+    <div class="topbar-title">MINDANAO STATE UNIVERSITY — NAAWAN</div>
+    <div class="topbar-meta">Enrollment Management System | AY 2025–2026</div>
+  </div>
+  <div class="topbar-user">
+    <span>Welcome, Juan Dela Cruz</span>
+    <button class="btn-logout" onclick="doLogout()">Logout</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-head">Navigation</div>
+    <nav>
+      <a onclick="navClick('Home')"><span class="icon">🏠</span> Home</a>
+      <a class="active" onclick="navClick('Enroll')"><span class="icon">📋</span> Enroll Subjects</a>
+      <a onclick="navClick('Schedule')"><span class="icon">📅</span> View Schedule</a>
+      <a onclick="navClick('Payments')"><span class="icon">💳</span> Payments</a>
+      <a onclick="navClick('Grades')"><span class="icon">📊</span> Grades</a>
+      <a onclick="navClick('Download')"><span class="icon">📥</span> Download Forms</a>
+      <a onclick="navClick('Announcements')"><span class="icon">📢</span> Announcements</a>
+      <a onclick="navClick('Contact')"><span class="icon">📞</span> Contact Registrar</a>
+      <a onclick="navClick('Help')"><span class="icon">❓</span> Help</a>
+      <a onclick="navClick('Settings')"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-notice">
+      <div class="notice-label">⚠ Enrollment Deadline</div>
+      <div class="deadline">January 30, 2026</div>
+      <div style="font-size:11px;color:#555;margin-top:4px;">Contact registrar at ext. 104 for assistance.</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Progress bar -->
+    <div class="progress-wrap">
+      <div class="progress-title">Add / Drop Subject</div>
+      <div class="progress-subtitle">Complete all steps to finalize your enrollment request.</div>
+      <div class="steps">
+        <div class="step done">
+          <div class="step-dot">✓</div>
+          <div class="step-label">Verify ID</div>
+        </div>
+        <div class="step active">
+          <div class="step-dot">2</div>
+          <div class="step-label">Fill Form</div>
+        </div>
+        <div class="step">
+          <div class="step-dot">3</div>
+          <div class="step-label">Review</div>
+        </div>
+        <div class="step">
+          <div class="step-dot">4</div>
+          <div class="step-label">Adviser Sign</div>
+        </div>
+        <div class="step">
+          <div class="step-dot">5</div>
+          <div class="step-label">Submit</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="alert alert-err" id="alertErr">
+      <strong>Please fix the following before submitting:</strong>
+      <ul id="errList"></ul>
+    </div>
+    <div class="alert alert-ok" id="alertOk">
+      ✅ <strong>Request submitted successfully!</strong> Reference No: <strong id="refNo"></strong>.
+      Please wait 3–5 business days for processing. Keep your reference number for follow-up.
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+      <div class="form-card-title">Step 2 of 5 — Subject Enrollment Details</div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="f_id">Student ID Number <span class="req">*</span></label>
+          <input id="f_id" type="text" placeholder="e.g. 2021-00123" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label for="f_name">Full Name <span class="req">*</span></label>
+          <input id="f_name" type="text" placeholder="Last, First, M.I. — e.g. Dela Cruz, Juan, A."/>
+        </div>
+        <div class="field">
+          <label for="f_subj">Subject Code <span class="req">*</span></label>
+          <select id="f_subj">
+            <option value="">— Select subject —</option>
+            <option value="ITE125">ITE 125 – Human-Computer Interaction</option>
+            <option value="ITE131">ITE 131 – Web Development</option>
+            <option value="CSC101">CSC 101 – Programming Fundamentals</option>
+            <option value="CSC210">CSC 210 – Data Structures</option>
+            <option value="GED111">GED 111 – Mathematics in the Modern World</option>
+          </select>
+          <span class="hint">Choose from the available subjects this semester.</span>
+        </div>
+        <div class="field">
+          <label for="f_sec">Section <span class="req">*</span></label>
+          <select id="f_sec">
+            <option value="">— Select section —</option>
+            <option value="A">Section A</option>
+            <option value="B">Section B</option>
+            <option value="C">Section C</option>
+            <option value="D">Section D</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="f_reason">Reason for Add/Drop (optional)</label>
+          <input id="f_reason" type="text" placeholder="Briefly describe your reason (e.g. schedule conflict, subject prerequisite met)"/>
+        </div>
+        <div class="field full">
+          <label>
+            <input type="checkbox" id="f_confirm" style="width:auto;margin-right:6px;"/>
+            I confirm that the information above is correct and I understand this request will be reviewed by my adviser. <span class="req">*</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enrolled Subjects Card -->
+    <div class="form-card">
+      <div class="form-card-title">Currently Enrolled Subjects</div>
+      <table class="subjects-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Description</th>
+            <th>Units</th>
+            <th>Schedule</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ITE 125</td>
+            <td>Human-Computer Interaction</td>
+            <td>3</td>
+            <td>MWF 7:00–8:00 AM</td>
+            <td><span class="badge badge-ok">Enrolled</span></td>
+          </tr>
+          <tr>
+            <td>ITE 131</td>
+            <td>Web Development</td>
+            <td>3</td>
+            <td>TTh 10:00 AM–12:00 PM</td>
+            <td><span class="badge badge-pend">Pending</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="submitPortal()">Submit Request</button>
+      <button class="btn btn-draft" onclick="saveDraft()">Save Draft</button>
+      <button class="btn btn-secondary" onclick="resetPortal()">Reset All Fields</button>
+      <button class="btn btn-danger" onclick="cancelPortal()">Cancel</button>
+      <button class="btn btn-back" onclick="navClick('Step1')">← Back to Step 1</button>
+    </div>
+
+  </main>
+
+  <!-- Right Panel -->
+  <aside class="right-panel">
+    <div class="panel-card">
+      <div class="panel-card-head">Announcements</div>
+      <div class="panel-card-body">
+        <div class="announce-item">
+          <div class="atag">Deadline</div>
+          Enrollment extended to <strong>Jan 30</strong>. Bring certificate of residency, 2×2 photos, and Form 5.
+        </div>
+        <div class="announce-item">
+          <div class="atag">Maintenance</div>
+          System maintenance every Sunday 12MN–4AM. Save your work before then.
+        </div>
+        <div class="announce-item">
+          <div class="atag">New Subjects</div>
+          New 2nd semester subjects available. Consult your adviser before enrolling.
+        </div>
+      </div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-card-head">Quick Links</div>
+      <div class="panel-card-body">
+        <a class="quick-link" onclick="navClick('Handbook')">📄 Student Handbook</a>
+        <a class="quick-link" onclick="navClick('Guidelines')">📋 Enrollment Guidelines</a>
+        <a class="quick-link" onclick="navClick('Hours')">🕐 Registrar Office Hours</a>
+        <a class="quick-link" onclick="navClick('Calendar')">📅 School Calendar</a>
+      </div>
+    </div>
+  </aside>
+
+</div><!-- end layout -->
+
+<!-- Footer -->
+<div class="footer">
+  <span>© 2025 MSU-Naawan Enrollment Management System</span>
+  <span id="sessionTime">Session active</span>
+</div>
+
+<!-- Logout Modal -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal-box">
+    <div class="modal-title">Confirm Logout</div>
+    <div class="modal-body">Are you sure you want to log out? Any unsaved changes will be lost.</div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('logoutModal')">Cancel</button>
+      <button class="btn btn-danger"    onclick="confirmLogout()">Yes, Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nav Modal -->
+<div class="modal-overlay" id="navModal">
+  <div class="modal-box">
+    <div class="modal-title" id="navModalTitle">Coming Soon</div>
+    <div class="modal-body">This section is currently under development. For assistance, please contact the Registrar's Office at <strong>ext. 104</strong> or email <strong>registrar@msun.edu.ph</strong>.</div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="closeModal('navModal')">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal-box">
+    <div class="modal-title" style="color:#c62828;">Cancel Request?</div>
+    <div class="modal-body">This will discard all unsaved changes. You will be returned to the enrollment home page. This action cannot be undone.</div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('cancelModal')">Go Back</button>
+      <button class="btn btn-danger"    onclick="confirmCancel()">Yes, Discard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Clock
+  function updateClock() {
+    var d = new Date();
+    var t = d.toLocaleTimeString();
+    var el = document.getElementById('sessionTime');
+    if (el) el.textContent = 'Server time: ' + t;
+  }
+  setInterval(updateClock, 1000); updateClock();
+
+  // Submit
+  function submitPortal() {
+    var fields = [
+      { id:'f_id',   label:'Student ID Number' },
+      { id:'f_name', label:'Full Name' },
+      { id:'f_subj', label:'Subject Code' },
+      { id:'f_sec',  label:'Section' },
+    ];
+    fields.forEach(function(f){ document.getElementById(f.id).classList.remove('err'); });
+    var errs = [];
+    fields.forEach(function(f){
+      var el = document.getElementById(f.id);
+      if (!el.value.trim()) { el.classList.add('err'); errs.push(f.label + ' is required.'); }
+    });
+    if (!document.getElementById('f_confirm').checked) errs.push('You must confirm the action before submitting.');
+    var errDiv = document.getElementById('alertErr');
+    var okDiv  = document.getElementById('alertOk');
+    if (errs.length > 0) {
+      var list = document.getElementById('errList');
+      list.innerHTML = errs.map(function(e){ return '<li>' + e + '</li>'; }).join('');
+      errDiv.classList.add('show'); okDiv.classList.remove('show');
+      errDiv.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    } else {
+      errDiv.classList.remove('show'); okDiv.classList.add('show');
+      var ref = 'ENR-' + Math.floor(Math.random()*90000+10000);
+      document.getElementById('refNo').textContent = ref;
+      okDiv.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }
+  }
+
+  // Reset
+  function resetPortal() {
+    if (!confirm('Reset will clear all fields. Are you sure?')) return;
+    ['f_id','f_name','f_reason'].forEach(function(id){ document.getElementById(id).value=''; document.getElementById(id).classList.remove('err'); });
+    document.getElementById('f_subj').value=''; document.getElementById('f_subj').classList.remove('err');
+    document.getElementById('f_sec').value='';  document.getElementById('f_sec').classList.remove('err');
+    document.getElementById('f_confirm').checked=false;
+    document.getElementById('alertErr').classList.remove('show');
+    document.getElementById('alertOk').classList.remove('show');
+  }
+
+  function cancelPortal() { document.getElementById('cancelModal').classList.add('show'); }
+  function confirmCancel() {
+    resetPortal(); closeModal('cancelModal');
+    document.getElementById('alertErr').classList.remove('show');
+    document.getElementById('alertOk').classList.remove('show');
+  }
+
+  function saveDraft() {
+    var id = document.getElementById('f_id').value.trim();
+    if (!id) { alert('Please enter at least your Student ID before saving a draft.'); return; }
+    alert('Draft saved. Note: Drafts are stored locally and will be cleared when your session ends. Submit your request to save it permanently.');
+  }
+
+  function doLogout() { document.getElementById('logoutModal').classList.add('show'); }
+  function confirmLogout() { closeModal('logoutModal'); alert('You have been logged out. (Demo)'); }
+  function navClick(s) { document.getElementById('navModalTitle').textContent='Section: ' + s; document.getElementById('navModal').classList.add('show'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+</script>
+</body>
+</html>
